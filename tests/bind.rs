@@ -1,4 +1,4 @@
-extern crate ws;
+extern crate parity_ws as ws;
 
 use std::net::Ipv4Addr;
 

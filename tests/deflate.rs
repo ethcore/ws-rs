@@ -1,7 +1,7 @@
 #![cfg(feature = "permessage-deflate")]
 extern crate env_logger;
 extern crate url;
-extern crate ws;
+extern crate parity_ws as ws;
 
 use ws::deflate::DeflateHandler;
 use ws::{Builder, Message, Sender, Settings, WebSocket};

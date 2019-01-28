@@ -10,7 +10,7 @@ extern crate openssl;
 ///   KEY - The path to the key PEM (e.g. snakeoil.key)
 ///
 /// For more details concerning setting up the SSL context, see rust-openssl docs.
-extern crate ws;
+extern crate parity_ws as ws;
 
 #[cfg(feature = "ssl")]
 use std::fs::File;

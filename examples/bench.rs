@@ -4,7 +4,7 @@ extern crate url;
 /// A simple, but immature, benchmark client for destroying other WebSocket frameworks and proving
 /// WS-RS's performance excellence. ;)
 /// Make sure you allow for enough connections in your OS (e.g. ulimit -Sn 10000).
-extern crate ws;
+extern crate parity_ws as ws;
 
 // Try this against node for some fun
 

@@ -2,7 +2,7 @@ extern crate env_logger;
 extern crate mio_extras;
 extern crate time;
 /// An example demonstrating how to send and recieve a custom ping/pong frame.
-extern crate ws;
+extern crate parity_ws as ws;
 
 use std::str::from_utf8;
 

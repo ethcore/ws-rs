@@ -1,5 +1,5 @@
 /// An example of a chat web application server
-extern crate ws;
+extern crate parity_ws as ws;
 use ws::{listen, Handler, Message, Request, Response, Result, Sender};
 
 // This can be read from a file

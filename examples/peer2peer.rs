@@ -26,7 +26,7 @@ extern crate url;
 /// Stdin on 3013 will be sent to 3012 and 3015
 /// Stdin on 3014 will be sent to 3012 only
 /// Stdin on 3015 will be sent to 3012 and 2013
-extern crate ws;
+extern crate parity_ws as ws;
 #[macro_use]
 extern crate log;
 

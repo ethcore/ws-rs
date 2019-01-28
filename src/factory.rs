@@ -18,7 +18,7 @@ pub trait Factory {
     /// This method can be used to differentiate a client aspect for a handler.
     ///
     /// ```
-    /// use ws::{Sender, Factory, Handler};
+    /// use parity_ws::{Sender, Factory, Handler};
     ///
     /// struct MyHandler {
     ///     ws: Sender,
@@ -57,7 +57,7 @@ pub trait Factory {
     /// This method can be used to differentiate a server aspect for a handler.
     ///
     /// ```
-    /// use ws::{Sender, Factory, Handler};
+    /// use parity_ws::{Sender, Factory, Handler};
     ///
     /// struct MyHandler {
     ///     ws: Sender,

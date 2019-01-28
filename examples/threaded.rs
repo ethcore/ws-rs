@@ -1,7 +1,7 @@
 extern crate env_logger;
 /// A thread-based client + server example. It also demonstrates using a struct as a WebSocket
 /// handler to implement more handler methods than a closure handler allows.
-extern crate ws;
+extern crate parity_ws as ws;
 
 use std::thread;
 use std::thread::sleep;

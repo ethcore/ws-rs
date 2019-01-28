@@ -1,7 +1,7 @@
 extern crate env_logger;
 /// WebSocket server used for testing against the Autobahn Test Suite. This is basically the server
 /// example without printing output or comments.
-extern crate ws;
+extern crate parity_ws as ws;
 
 #[cfg(feature = "permessage-deflate")]
 use ws::deflate::DeflateHandler;

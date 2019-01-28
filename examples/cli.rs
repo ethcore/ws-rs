@@ -4,7 +4,7 @@ extern crate term;
 /// Run this cli like this:
 /// cargo run --example server
 /// cargo run --example cli -- ws://127.0.0.1:3012
-extern crate ws;
+extern crate parity_ws as ws;
 
 use std::io;
 use std::io::prelude::*;

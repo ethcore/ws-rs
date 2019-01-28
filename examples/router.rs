@@ -1,7 +1,7 @@
 extern crate env_logger;
 /// WebSocket server using trait objects to route
 /// to an infinitely extensible number of handlers
-extern crate ws;
+extern crate parity_ws as ws;
 
 // A WebSocket handler that routes connections to different boxed handlers by resource
 struct Router {

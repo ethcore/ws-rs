@@ -2,7 +2,7 @@ extern crate env_logger;
 extern crate url;
 /// A single-threaded client + server example showing how flexible closure handlers can be for
 /// trivial applications.
-extern crate ws;
+extern crate parity_ws as ws;
 
 use ws::{Sender, WebSocket};
 

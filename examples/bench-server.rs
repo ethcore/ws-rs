@@ -1,5 +1,5 @@
 /// WebSocket server used for testing the bench example.
-extern crate ws;
+extern crate parity_ws as ws;
 
 use ws::{Builder, Sender, Settings};
 

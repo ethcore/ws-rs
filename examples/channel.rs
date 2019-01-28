@@ -8,7 +8,7 @@ extern crate env_logger;
 ///
 /// This example demonstrates how to use threads, channels, and WebSocket handlers to create a
 /// complex system from simple, composable parts.
-extern crate ws;
+extern crate parity_ws as ws;
 
 use std::sync::mpsc::Sender as ThreadOut;
 use std::sync::mpsc::channel;
