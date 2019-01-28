@@ -10,10 +10,10 @@ keywords = [
     "web",
 ]
 license = "MIT"
-name = "ws"
+name = "parity-ws"
 readme = "README.md"
-repository = "https://github.com/housleyjk/ws-rs"
-version = "0.7.9"
+repository = "https://github.com/paritytech/ws-rs"
+version = "0.8.0"
 
 [dependencies]
 byteorder = "1.2.1"
