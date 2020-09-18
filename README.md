@@ -14,6 +14,10 @@ listen("127.0.0.1:3012", |out| {
 
 Note this is (hopefuly) temporary fork of the original crate until https://github.com/housleyjk/ws-rs/pull/252 gets merged.
 
+# This fork
+
+Note this is (hopefuly) a temporary fork of the original crate until https://github.com/housleyjk/ws-rs/pull/328 gets merged.
+
 Introduction
 ------------
 [![Build Status](https://travis-ci.org/housleyjk/ws-rs.svg?branch=stable)](https://travis-ci.org/housleyjk/ws-rs)
