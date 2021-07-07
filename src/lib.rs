@@ -19,7 +19,7 @@ extern crate url;
 #[macro_use]
 extern crate log;
 
-mod capped_buffer;
+mod circular_buffer;
 mod communication;
 mod connection;
 mod factory;

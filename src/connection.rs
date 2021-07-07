@@ -5,6 +5,7 @@ use std::mem::replace;
 use std::net::SocketAddr;
 use std::str::from_utf8;
 
+use bytes::BufMut;
 use mio::tcp::TcpStream;
 use mio::{Ready, Token};
 use mio_extras::timer::Timeout;
@@ -15,7 +16,7 @@ use native_tls::HandshakeError;
 #[cfg(feature = "ssl")]
 use openssl::ssl::HandshakeError;
 
-use capped_buffer::CappedBuffer;
+use circular_buffer::CircularBuffer;
 use frame::Frame;
 use handler::Handler;
 use handshake::{Handshake, Request, Response};
@@ -88,8 +89,8 @@ where
 
     fragments: VecDeque<Frame>,
 
-    in_buffer: Cursor<CappedBuffer>,
-    out_buffer: Cursor<CappedBuffer>,
+    in_buffer: CircularBuffer,
+    out_buffer: CircularBuffer,
 
     handler: H,
 
@@ -120,8 +121,14 @@ where
             endpoint: Endpoint::Server,
             events: Ready::empty(),
             fragments: VecDeque::with_capacity(settings.fragments_capacity),
-            in_buffer: Cursor::new(CappedBuffer::new(settings.in_buffer_capacity, settings.max_in_buffer_capacity)),
-            out_buffer: Cursor::new(CappedBuffer::new(settings.out_buffer_capacity, settings.max_out_buffer_capacity)),
+            in_buffer: CircularBuffer::new(
+                settings.in_buffer_capacity,
+                settings.max_in_buffer_capacity,
+            ),
+            out_buffer: CircularBuffer::new(
+                settings.out_buffer_capacity,
+                settings.max_out_buffer_capacity,
+            ),
             handler,
             addresses: Vec::new(),
             settings,
@@ -606,7 +613,7 @@ where
                             if !data[..end].ends_with(b"\r\n\r\n") {
                                 return Ok(());
                             }
-                            self.in_buffer.get_mut().write_all(&data[end..])?;
+                            self.in_buffer.write_all(&data[end..])?;
                             end
                         };
                         res.get_mut().truncate(end);
@@ -671,7 +678,7 @@ where
             })?;
 
             // check to see if there is anything to read already
-            if !self.in_buffer.get_ref().is_empty() {
+            if !self.in_buffer.is_empty() {
                 self.read_frames()?;
             }
 
@@ -986,8 +993,7 @@ where
 
                 if let Some(len) = self.socket.try_write_buf(&mut self.out_buffer)? {
                     trace!("Wrote {} bytes to {}", len, self.peer_addr());
-                    let finished = len == 0
-                        || self.out_buffer.position() == self.out_buffer.get_ref().len() as u64;
+                    let finished = len == 0 || self.out_buffer.is_empty();
                     if finished {
                         match self.state {
                             // we are are a server that is closing and just wrote out our confirming
@@ -1161,7 +1167,7 @@ where
     fn check_events(&mut self) {
         if !self.state.is_connecting() {
             self.events.insert(Ready::readable());
-            if self.out_buffer.position() < self.out_buffer.get_ref().len() as u64 {
+            if !self.out_buffer.is_empty() {
                 self.events.insert(Ready::writable());
             }
         }
@@ -1176,46 +1182,30 @@ where
 
         trace!("Buffering frame to {}:\n{}", self.peer_addr(), frame);
 
-        frame.format(self.out_buffer.get_mut())?;
+        frame.format(&mut self.out_buffer)?;
         Ok(())
     }
 
     fn check_buffer_out(&mut self, frame: &Frame) -> Result<()> {
-        if self.out_buffer.get_ref().remaining() < frame.len() {
-            // There is no more room to grow, and we can't shift the buffer
-            if self.out_buffer.position() == 0 {
-                return Err(Error::new(
-                    Kind::Capacity,
-                    "Reached the limit of the output buffer for the connection.",
-                ));
-            }
-
-            // Shift the buffer
-            let prev_pos = self.out_buffer.position() as usize;
-            self.out_buffer.set_position(0);
-            self.out_buffer.get_mut().shift(prev_pos);
+        if self.out_buffer.remaining_mut() < frame.len() {
+            return Err(Error::new(
+                Kind::Capacity,
+                "Reached the limit of the output buffer for the connection.",
+            ));
         }
         Ok(())
     }
 
     fn buffer_in(&mut self) -> Result<Option<usize>> {
         trace!("Reading buffer for connection to {}.", self.peer_addr());
-        if let Some(len) = self.socket.try_read_buf(self.in_buffer.get_mut())? {
+        if self.in_buffer.remaining_mut() == 0 {
+            return Err(Error::new(
+                Kind::Capacity,
+                "Reached the limit of the input buffer for the connection.",
+            ));
+        }
+        if let Some(len) = self.socket.try_read_buf(&mut self.in_buffer)? {
             trace!("Buffered {}.", len);
-            if self.in_buffer.get_ref().remaining() == 0 {
-                // There is no more room to grow, and we can't shift the buffer
-                if self.in_buffer.position() == 0 {
-                    return Err(Error::new(
-                        Kind::Capacity,
-                        "Reached the limit of the input buffer for the connection.",
-                    ));
-                }
-
-                // Shift the buffer
-                let prev_pos = self.in_buffer.position() as usize;
-                self.in_buffer.set_position(0);
-                self.in_buffer.get_mut().shift(prev_pos);
-            }
             Ok(Some(len))
         } else {
             Ok(None)

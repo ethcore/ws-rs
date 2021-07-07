@@ -1,14 +1,14 @@
 use std::default::Default;
 use std::fmt;
-use std::io::{Cursor, ErrorKind, Read, Write};
+use std::io::{ErrorKind, Read, Write};
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use bytes::Buf;
 use rand;
 
-use capped_buffer::CappedBuffer;
+use circular_buffer::CircularBuffer;
 use protocol::{CloseCode, OpCode};
 use result::{Error, Kind, Result};
-use stream::TryReadBuf;
 
 fn apply_mask(buf: &mut [u8], mask: &[u8; 4]) {
     let iter = buf.iter_mut().zip(mask.iter().cycle());
@@ -245,14 +245,14 @@ impl Frame {
     }
 
     /// Parse the input stream into a frame.
-    pub fn parse(cursor: &mut Cursor<CappedBuffer>, max_payload_length: u64) -> Result<Option<Frame>> {
-        let size = cursor.get_ref().len() as u64 - cursor.position();
-        let initial = cursor.position();
-        trace!("Position in buffer {}", initial);
+    pub fn parse(cursor: &mut CircularBuffer, max_payload_length: u64) -> Result<Option<Frame>> {
+        let size = cursor.remaining();
+        let initial = cursor.read_cursor();
+        trace!("Position in buffer {:?}", initial);
 
         let mut head = [0u8; 2];
         if cursor.read(&mut head)? != 2 {
-            cursor.set_position(initial);
+            cursor.set_read_cursor(initial);
             return Ok(None);
         }
 
@@ -286,7 +286,7 @@ impl Frame {
         } {
             match cursor.read_uint::<BigEndian>(length_nbytes) {
                 Err(ref err) if err.kind() == ErrorKind::UnexpectedEof => {
-                    cursor.set_position(initial);
+                    cursor.set_read_cursor(initial);
                     return Ok(None);
                 }
                 Err(err) => {
@@ -313,7 +313,7 @@ impl Frame {
         let mask = if masked {
             let mut mask_bytes = [0u8; 4];
             if cursor.read(&mut mask_bytes)? != 4 {
-                cursor.set_position(initial);
+                cursor.set_read_cursor(initial);
                 return Ok(None);
             } else {
                 header_length += 4;
@@ -324,20 +324,15 @@ impl Frame {
         };
 
         match length.checked_add(header_length) {
-            Some(l) if size < l => {
-                cursor.set_position(initial);
+            Some(l) if (size as u64) < l => {
+                cursor.set_read_cursor(initial);
                 return Ok(None);
             }
             Some(_) => (),
             None => return Ok(None),
         };
 
-        let mut data = Vec::with_capacity(length as usize);
-        if length > 0 {
-            if let Some(read) = cursor.try_read_buf(&mut data)? {
-                debug_assert!(read == length as usize, "Read incorrect payload length!");
-            }
-        }
+        let data = cursor.read_exact_into_vec(length as usize);
 
         // Disallow bad opcode
         if let OpCode::Bad = opcode {
