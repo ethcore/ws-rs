@@ -133,6 +133,21 @@ impl CircularBuffer {
 
         output
     }
+
+    pub fn apply_soft_limit(&mut self, limit: usize) {
+        let limit = std::cmp::min(limit, self.max_capacity);
+        if self.remaining() > limit || self.current_capacity() <= limit {
+            return;
+        }
+
+        if self.remaining() == 0 {
+            self.buffer = Vec::new().into_boxed_slice();
+            self.position = 0;
+            return;
+        }
+
+        self.resize_buffer(limit);
+    }
 }
 
 impl Buf for CircularBuffer {
@@ -314,5 +329,38 @@ mod test {
         b.advance(4);
         b.write_all(b"89ABCDEF").unwrap();
         assert_eq!(b.read_exact_into_vec(12), b"456789ABCDEF");
+    }
+
+    #[test]
+    fn apply_soft_limit() {
+        let mut b = CircularBuffer::new(0, 16);
+        b.write_all(b"0123456789ABCDEF").unwrap();
+        assert_eq!(b.current_capacity(), 16);
+
+        b.apply_soft_limit(16);
+        assert_eq!(b.current_capacity(), 16);
+        assert_eq!(b.bytes(), b"0123456789ABCDEF");
+
+        b.advance(1);
+        b.apply_soft_limit(16);
+        assert_eq!(b.current_capacity(), 16);
+        assert_eq!(b.bytes(), b"123456789ABCDEF");
+
+        b.apply_soft_limit(15);
+        assert_eq!(b.current_capacity(), 15);
+        assert_eq!(b.bytes(), b"123456789ABCDEF");
+
+        b.apply_soft_limit(8);
+        assert_eq!(b.current_capacity(), 15);
+        assert_eq!(b.bytes(), b"123456789ABCDEF");
+
+        b.advance(15);
+        b.apply_soft_limit(15);
+        assert_eq!(b.current_capacity(), 15);
+        assert_eq!(b.bytes(), b"");
+
+        b.apply_soft_limit(14);
+        assert_eq!(b.current_capacity(), 0);
+        assert_eq!(b.bytes(), b"");
     }
 }
