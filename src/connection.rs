@@ -974,7 +974,9 @@ where
             }
         }
 
-        self.in_buffer.apply_soft_limit(self.settings.in_buffer_capacity_soft_limit);
+        if self.in_buffer.is_empty() {
+            self.in_buffer.apply_soft_limit(self.settings.in_buffer_capacity_soft_limit);
+        }
         Ok(())
     }
 
@@ -995,7 +997,9 @@ where
 
                 if let Some(len) = self.socket.try_write_buf(&mut self.out_buffer)? {
                     trace!("Wrote {} bytes to {}", len, self.peer_addr());
-                    self.out_buffer.apply_soft_limit(self.settings.out_buffer_capacity_soft_limit);
+                    if self.out_buffer.is_empty() {
+                        self.out_buffer.apply_soft_limit(self.settings.out_buffer_capacity_soft_limit);
+                    }
 
                     let finished = len == 0 || self.out_buffer.is_empty();
                     if finished {

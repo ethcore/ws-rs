@@ -171,8 +171,9 @@ pub struct Settings {
     /// Default: 10,485,760
     pub in_buffer_capacity_hard_limit: usize,
     /// The maximum size to which the incoming buffer should grow. This is a soft limit, so it is
-    /// possible for the buffer to grow over this limit, however once it contains enough unused
-    /// capacity it will be opportunistically shrunk down to at most this size.
+    /// possible for the buffer to grow over this limit, however once its capacity grows beyond
+    /// this value it will be freed as soon as the buffer is emptied out, and reallocated with
+    /// its initial capacity once it's needed again.
     /// Default: 1,048,576
     pub in_buffer_capacity_soft_limit: usize,
     /// The initial size of the outgoing buffer. A larger buffer uses more memory but will allow for
@@ -184,8 +185,9 @@ pub struct Settings {
     /// Default: 10,485,760
     pub out_buffer_capacity_hard_limit: usize,
     /// The maximum size to which the outgoing buffer should grow. This is a soft limit, so it is
-    /// possible for the buffer to grow over this limit, however once it contains enough unused
-    /// capacity it will be opportunistically shrunk down to at most this size.
+    /// possible for the buffer to grow over this limit, however once its capacity grows beyond
+    /// this value it will be freed as soon as the buffer is emptied out, and reallocated with
+    /// its initial capacity once it's needed again.
     /// Default: 1,048,576
     pub out_buffer_capacity_soft_limit: usize,
     /// Whether to panic when an Internal error is encountered. Internal errors should generally
