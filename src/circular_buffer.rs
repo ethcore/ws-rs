@@ -8,6 +8,7 @@ pub struct CircularBuffer {
     position: usize,
     length: usize,
     max_capacity: usize,
+    initial_capacity: usize,
 }
 
 impl CircularBuffer {
@@ -23,6 +24,7 @@ impl CircularBuffer {
             position: 0,
             length: 0,
             max_capacity,
+            initial_capacity: capacity,
         }
     }
 
@@ -76,7 +78,10 @@ impl CircularBuffer {
 
         let new_capacity = std::cmp::min(
             self.max_capacity,
-            std::cmp::max(self.current_capacity() * 2, MINIMUM_NON_EMPTY_CAPACITY),
+            std::cmp::max(
+                self.current_capacity() * 2,
+                std::cmp::max(MINIMUM_NON_EMPTY_CAPACITY, self.initial_capacity)
+            ),
         );
 
         self.resize_buffer(new_capacity);
